@@ -14,10 +14,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Bugzilla API testing block
     {
-        // Default env values to empty String
+        // Retrieve Bugzilla API key and target BugID from runtime environment
+        // variables `AK_KEY` and `AK_BUG_ID`, respectively, where:
+        //   api_key -> defaults to an empty string
+        //   bud_id  -> required else panic! bailout 
         let (api_key, bug_id) : (String, String) = match (env::var("AK_KEY"), env::var("AK_BUG_ID")) {
             (Ok(k), Ok(l)) => (k, l),
-            _ => ("".to_owned(),"".to_owned()),
+            (_, Ok(l)) => ("".to_owned(), l),
+            _ => panic!("Error: environment variable 'AK_BUG_ID' must not be empty"),
         };
     
         let repo_uri: String = format!("https://bugs.webkit.org/rest/bug?api_key={}&id={}", api_key, bug_id.clone());
@@ -27,7 +31,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
         log::debug!("Response: ");
         resp.copy_to(&mut io::stdout())?;
-    
     }
 
     // git2-rs api testing block
@@ -41,12 +44,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::git::Repository;
+    use super::type_info::*;
     use ::std::env;
     use ::std::fs::{create_dir, remove_dir_all};
     use ::std::path::PathBuf;
-    use git::Repository;
-    use type_info::*;
 
     #[test]
     fn clone() {
