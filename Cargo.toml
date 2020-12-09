@@ -1,0 +1,22 @@
+[package]
+name = "ankou"
+version = "0.1.0"
+authors = ["bynx <drtychai@protonmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "ankou"
+path = "src/main.rs"
+
+[dependencies]
+log = "0.4.11"
+simple_logger ="1.11.0"
+
+
+hyper = "0.13.9"
+tokio = { version = "*", features = ["full"] }
+
+structopt = "*"
+time = "*"
+git2 = "*"
+
