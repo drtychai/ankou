@@ -1,7 +1,5 @@
 # ankou
-```
-/ɑːnkuː/
-```
+`/ɑːnkuː/`  
 An OSINT git miner focused on enumerating security issues in a [browser] repo.
 
 _Current only supports WebKit (which is also still a WIP)_
