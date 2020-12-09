@@ -6,7 +6,7 @@ _Current only supports WebKit (which is also still a WIP)_
 
 ## Usage
 ```bash
-ankou 0.1.0
+ankou 0.0.1
 
 USAGE:
     ankou [FLAGS] [OPTIONS] --target-engine [<webkit>,<gecko>,<chromium>]
