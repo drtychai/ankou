@@ -81,11 +81,7 @@ fn run(args: &Args) -> Result<(), Error> {
     let mut revwalk = repo.revwalk()?;
 
     // Prepare the revwalk based on CLI parameters
-    let base = if args.flag_reverse {
-        git2::Sort::REVERSE
-    } else {
-        git2::Sort::NONE
-    };
+    let base = if args.flag_reverse { git2::Sort::REVERSE } else { git2::Sort::NONE };
     revwalk.set_sorting(
         base | if args.flag_topo_order {
             git2::Sort::TOPOLOGICAL
@@ -160,10 +156,9 @@ fn run(args: &Args) -> Result<(), Error> {
                         }
                     }
                     _ => {
-                        let m = commit.parents().all(|parent| {
-                            match_with_parent(&repo, &commit, &parent, &mut diffopts)
-                                .unwrap_or(false)
-                        });
+                        let m = commit
+                            .parents()
+                            .all(|parent| match_with_parent(&repo, &commit, &parent, &mut diffopts).unwrap_or(false));
                         if !m {
                             return None;
                         }
@@ -214,10 +209,7 @@ fn run(args: &Args) -> Result<(), Error> {
 
 fn sig_matches(sig: &Signature, arg: &Option<String>) -> bool {
     match *arg {
-        Some(ref s) => {
-            sig.name().map(|n| n.contains(s)).unwrap_or(false)
-                || sig.email().map(|n| n.contains(s)).unwrap_or(false)
-        }
+        Some(ref s) => sig.name().map(|n| n.contains(s)).unwrap_or(false) || sig.email().map(|n| n.contains(s)).unwrap_or(false),
         None => true,
     }
 }
@@ -271,12 +263,7 @@ fn print_time(time: &Time, prefix: &str) {
     );
 }
 
-fn match_with_parent(
-    repo: &Repository,
-    commit: &Commit,
-    parent: &Commit,
-    opts: &mut DiffOptions,
-) -> Result<bool, Error> {
+fn match_with_parent(repo: &Repository, commit: &Commit, parent: &Commit, opts: &mut DiffOptions) -> Result<bool, Error> {
     let a = parent.tree()?;
     let b = commit.tree()?;
     let diff = repo.diff_tree_to_tree(Some(&a), Some(&b), Some(opts))?;
@@ -288,16 +275,14 @@ impl Args {
         if self.flag_no_min_parents {
             return 0;
         }
-        self.flag_min_parents
-            .unwrap_or(if self.flag_merges { 2 } else { 0 })
+        self.flag_min_parents.unwrap_or(if self.flag_merges { 2 } else { 0 })
     }
 
     fn max_parents(&self) -> Option<usize> {
         if self.flag_no_max_parents {
             return None;
         }
-        self.flag_max_parents
-            .or(if self.flag_no_merges { Some(1) } else { None })
+        self.flag_max_parents.or(if self.flag_no_merges { Some(1) } else { None })
     }
 }
 

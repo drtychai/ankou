@@ -1,68 +1,68 @@
-#[allow(unused_imports,dead_code)]
 extern crate simple_logger;
-extern crate log;
 extern crate git2;
+extern crate reqwest;
 
-//use hyper::{body::HttpBody as _, Client};
-//use tokio::io::{self, AsyncWriteExt as _};
-
+#[macro_use]
+mod type_info;
+mod logger;
 mod git;
 
-mod utils;
-//use utils::Result;
+use ::std::{io,env};
 
-fn main() {
-    match utils::get_logger().init() {
-        Ok(()) => {},
-        Err(e) => panic!("Logger initalization failed, err: {}", e),
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    logger::get_logger().init().unwrap();
+
+    // Bugzilla API testing block
+    {
+        // Default env values to empty String
+        let (api_key, bug_id) : (String, String) = match (env::var("AK_KEY"), env::var("AK_BUG_ID")) {
+            (Ok(k), Ok(l)) => (k, l),
+            _ => ("".to_owned(),"".to_owned()),
+        };
+    
+        let repo_uri: String = format!("https://bugs.webkit.org/rest/bug?api_key={}&id={}", api_key, bug_id.clone());
+    
+        log::info!("Requesting bug ID {} for WebKit...", bug_id);
+        let mut resp = reqwest::blocking::get(&repo_uri)?;
+    
+        log::debug!("Response: ");
+        resp.copy_to(&mut io::stdout())?;
+    
     }
 
-    git::log(vec![String::from("")], 1, 0).unwrap();
+    // git2-rs api testing block
+    {
+        git::log(vec!["".to_owned()],0,50).unwrap();
+    }
 
 
+    Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ::std::env;
+    use ::std::fs::{create_dir, remove_dir_all};
+    use ::std::path::PathBuf;
+    use git::Repository;
+    use type_info::*;
 
-//#[tokio::main]
-//async fn main() -> Result<()> {
-//    utils::get_logger().init().unwrap();
-//
-//    // Some simple CLI args requirements...
-//    let url = match ::std::env::args().nth(1) {
-//        Some(url) => url,
-//        None => {
-//            log::info!("Usage: client <url>");
-//            return Ok(());
-//        }
-//    };
-//
-//    // HTTPS requires picking a TLS implementation, so give a better
-//    // warning if the user tries to request an 'https' URL.
-//    let url = url.parse::<hyper::Uri>().unwrap();
-//    if url.scheme_str() != Some("http") {
-//        log::info!("This example only works with 'http' URLs.");
-//        return Ok(());
-//    }
-//
-//    fetch_url(url).await
-//}
-//
-//async fn fetch_url(url: hyper::Uri) -> Result<()> {
-//    let client = Client::new();
-//
-//    let mut res = client.get(url).await?;
-//
-//    log::info!("Response: {}", res.status());
-//    log::info!("Headers: {:#?}\n", res.headers());
-//
-//    // Stream the body, writing each chunk to stdout as we get it
-//    // (instead of buffering and printing at the end).
-//    while let Some(next) = res.data().await {
-//        let chunk = next?;
-//        io::stdout().write_all(&chunk).await?;
-//    }
-//
-//    log::info!("\n\nDone!");
-//
-//    Ok(())
-//}
+    #[test]
+    fn clone() {
+        let repo = "https://github.com/drtychai/dotfiles";
+        let test_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join("tests")
+            .join("akmn");
+
+        create_dir(test_dir.clone()).unwrap();
+
+        // Clone into our test directory
+        assert_eq!(
+            type_of!(Repository::clone(repo, test_dir.clone().join("clone_test")).unwrap()),
+            type_of!(Repository::init_bare(test_dir.clone().join("clone_test_init")).unwrap())
+        );
+
+        remove_dir_all(test_dir.clone()).unwrap();
+    }
+}

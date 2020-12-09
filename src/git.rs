@@ -1,7 +1,5 @@
-#[allow(unused_imports,dead_code)]
-use git2::{Commit, DiffOptions, ObjectType, Repository, Signature, Time};
-use git2::{DiffFormat, Error}; //, Pathspec};
-use std::str;
+use ::std::str;
+pub use git2::{Commit, DiffFormat, DiffOptions, Error, ObjectType, Repository, Signature, Time};
 
 pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result<(), Error> {
     //let path = args.flag_git_dir.as_ref().map(|s| &s[..]).unwrap_or(".");
@@ -10,15 +8,18 @@ pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result
     let mut revwalk = repo.revwalk()?;
 
     // Prepare the revwalk based on CLI parameters
-    let base = if false { //args.flag_reverse {
+    let base = if false {
+        //args.flag_reverse {
         git2::Sort::REVERSE
     } else {
         git2::Sort::NONE
     };
     revwalk.set_sorting(
-        base | if false { // args.flag_topo_order {
+        base | if false {
+            // args.flag_topo_order {
             git2::Sort::TOPOLOGICAL
-        } else if false { //args.flag_date_order {
+        } else if false {
+            //args.flag_date_order {
             git2::Sort::TIME
         } else {
             git2::Sort::NONE
@@ -82,7 +83,8 @@ pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result
             //        return None;
             //    }
             //}
-            if !false { //args.arg_spec.is_empty() {
+            if !false {
+                //args.arg_spec.is_empty() {
                 match commit.parents().len() {
                     0 => {
                         let _tree = filter_try!(commit.tree());
@@ -92,10 +94,9 @@ pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result
                         //}
                     }
                     _ => {
-                        let m = commit.parents().all(|parent| {
-                            match_with_parent(&repo, &commit, &parent, &mut diffopts)
-                                .unwrap_or(false)
-                        });
+                        let m = commit
+                            .parents()
+                            .all(|parent| match_with_parent(&repo, &commit, &parent, &mut diffopts).unwrap_or(false));
                         if !m {
                             return None;
                         }
@@ -119,8 +120,9 @@ pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result
     // print!
     for commit in revwalk {
         let commit = commit?;
-        print_commit(&commit);
-        if commit.parents().len() > 1 { // !args.flag_patch || commit.parents().len() > 1 {
+        println!("{:?}", commit); //print_commit(&commit);
+        if commit.parents().len() > 1 {
+            // !args.flag_patch || commit.parents().len() > 1 {
             continue;
         }
         let a = if commit.parents().len() == 1 {
@@ -146,10 +148,7 @@ pub fn log(_args: Vec<String>, max_parents: usize, min_parents: usize) -> Result
 
 fn _sig_matches(sig: &Signature, arg: &Option<String>) -> bool {
     match *arg {
-        Some(ref s) => {
-            sig.name().map(|n| n.contains(s)).unwrap_or(false)
-                || sig.email().map(|n| n.contains(s)).unwrap_or(false)
-        }
+        Some(ref s) => sig.name().map(|n| n.contains(s)).unwrap_or(false) || sig.email().map(|n| n.contains(s)).unwrap_or(false),
         None => true,
     }
 }
@@ -162,6 +161,7 @@ fn _log_message_matches(msg: Option<&str>, grep: &Option<String>) -> bool {
     }
 }
 
+#[allow(dead_code)]
 fn print_commit(commit: &Commit) {
     println!("commit {}", commit.id());
 
@@ -203,12 +203,7 @@ fn print_time(time: &Time, prefix: &str) {
     );
 }
 
-fn match_with_parent(
-    repo: &Repository,
-    commit: &Commit,
-    parent: &Commit,
-    opts: &mut DiffOptions,
-) -> Result<bool, Error> {
+fn match_with_parent(repo: &Repository, commit: &Commit, parent: &Commit, opts: &mut DiffOptions) -> Result<bool, Error> {
     let a = parent.tree()?;
     let b = commit.tree()?;
     let diff = repo.diff_tree_to_tree(Some(&a), Some(&b), Some(opts))?;

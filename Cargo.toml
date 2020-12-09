@@ -1,22 +1,21 @@
 [package]
 name = "ankou"
+description = "An OSINT repo miner focused on high-sev security bug"
 version = "0.1.0"
 authors = ["bynx <drtychai@protonmail.com>"]
 edition = "2018"
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
-name = "ankou"
+name = "ak"
 path = "src/main.rs"
 
 [dependencies]
-log = "0.4.11"
 simple_logger ="1.11.0"
-
-
-hyper = "0.13.9"
-tokio = { version = "*", features = ["full"] }
-
 structopt = "*"
-time = "*"
-git2 = "*"
 
+time = "0.1.44"
+git2 = "0.13.12"
+reqwest = { version = "0.10", features = ["blocking", "json"] }
