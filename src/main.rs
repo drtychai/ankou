@@ -5,7 +5,7 @@ extern crate reqwest;
 
 #[macro_use]
 mod type_info;
-mod git_log;
+mod git;
 
 use crate::simple_logger::SimpleLogger;
 use crate::structopt::StructOpt;
@@ -21,16 +21,16 @@ struct Args {
     cmd: Command,
 
     /// Maximum depth of parent references to walk
-    #[structopt(short, long)]
-    depth: Option<usize>,
+    #[structopt(short, long, default_value = "10")]
+    depth: usize,
 
     /// Bugzilla API key
     #[structopt(env = "AK_KEY", hide_env_values = true, required_if("cmd", "webkit"))]
     api_key: Option<String>,
 
-    /// Specific Bug ID to lookup
-    #[structopt(env = "AK_BUG_ID", hide_env_values = true)]
-    bug_id: Option<String>,
+    ///// Specific Bug ID to lookup
+    //#[structopt(env = "AK_BUG_ID", hide_env_values = true)]
+    //bug_id: Option<String>,
 
     /// Verbose
     #[structopt(short, global=true)]
@@ -72,15 +72,17 @@ enum Command {
 
 #[paw::main]
 fn main(args: Args) -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize our logger
     let level = match args.verbose {
         true => log::LevelFilter::Debug,
         false => log::LevelFilter::Info,
     };
     SimpleLogger::new().with_level(level).init().unwrap();
 
-    let (api_key, bug_id) : (String, String) = match (args.clone().api_key, args.clone().bug_id) {
-        (Some(k), Some(l)) => (k, l),
-        _ => panic!("Error: environment variable 'AK_BUG_ID' must not be empty"),
+    // Prep CLI args into local vars
+    let api_key = match args.clone().api_key {
+        Some(k) => k,
+        None => panic!("An API key is required to query external bug details. Please set the AK_KEY environment variable"),
     };
 
     let (path, base_uri): (::std::path::PathBuf, String) = match args.cmd {
@@ -89,42 +91,30 @@ fn main(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         Command::Gecko { local_path : path, bugzilla_api_endpoint: uri} => (path, uri),
     };
 
-    let repo_uri: String = format!("{}?api_key={}&id={}", base_uri, api_key, bug_id.clone());
+    // Collect all bug IDs from repository commits
+    let bugs: Vec<String> = match git::log(path.clone(), args.depth) {
+            Ok(s) => s,
+            Err(e) => panic!("Issues collecting bug IDs. Err: {:?}", e),
+    };
+   
+    // Request and sort bug details
+    for bug in bugs {
+        let repo_uri: String = format!("{}?api_key={}&id={}", base_uri, api_key, bug.clone());
 
-    log::debug!("Repository : {}", repo_uri);
-    log::debug!("API Key : {}", api_key);
-    log::debug!("Bug ID  : {}", bug_id);
-    log::debug!("Local Path: {}", path.display());
-
-    {
-        // Bugzilla API testing block
-        log::info!("Requesting bug ID {} for WebKit...", bug_id);
+        log::debug!("Requesting bug ID {} for WebKit...", repo_uri.clone());
         let mut resp = reqwest::blocking::get(&repo_uri)?;
 
         log::debug!("Response: ");
         resp.copy_to(&mut ::std::io::stdout())?;
+        println!();
     }
-
-    {
-        // Git log testing
-        let mut git_args = git_log::Args::default();
-        git_args.flag_git_dir = String::from(path.to_str().unwrap());
-        git_args.flag_max_count = args.depth;
-
-        match git_log::run(&git_args) {
-            Ok(()) => {}
-            Err(e) => log::error!("error: {}", e),
-           
-        };
-    }
-
 
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::git_log as git;
+    use super::git;
     use super::type_info::*;
     use ::std::env;
     use ::std::fs::{create_dir, remove_dir_all};

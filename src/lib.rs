@@ -2,4 +2,4 @@
 extern crate git2;
 
 pub mod type_info;
-pub mod git_log;
+pub mod git;

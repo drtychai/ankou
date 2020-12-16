@@ -10,7 +10,7 @@ ankou 0.0.1
 security-focused OSINT git miner
 
 USAGE:
-    ak [FLAGS] [OPTIONS] [ARGS] <SUBCOMMAND>
+    ak [FLAGS] [OPTIONS] [api-key] <SUBCOMMAND>
 
 FLAGS:
     -h, --help       Prints help information
@@ -18,11 +18,10 @@ FLAGS:
     -v               Verbose
 
 OPTIONS:
-    -d, --depth <depth>    Maximum depth of parent references to walk
+    -d, --depth <depth>    Maximum depth of parent references to walk [default: 10]
 
 ARGS:
     <api-key>    Bugzilla API key [env: AK_KEY]
-    <bug-id>     Specific Bug ID to lookup [env: AK_BUG_ID]
 
 SUBCOMMANDS:
     chromium    Enumerate the Google Chromium engine
