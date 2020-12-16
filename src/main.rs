@@ -1,14 +1,9 @@
 extern crate structopt;
 extern crate simple_logger;
-extern crate git2;
-extern crate reqwest;
-
-#[macro_use]
-mod type_info;
-mod git;
 
 use crate::simple_logger::SimpleLogger;
 use crate::structopt::StructOpt;
+use ankou::git;
 
 #[derive(Debug, StructOpt, Clone)]
 #[structopt(
@@ -114,27 +109,5 @@ fn main(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::git;
-    use super::type_info::*;
-    use ::std::env;
-    use ::std::fs::{create_dir, remove_dir_all};
-    use ::std::path::PathBuf;
 
-    #[test]
-    fn git_clone_types() {
-        let repo = "https://github.com/drtychai/dotfiles";
-        let test_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
-            .join("tests")
-            .join("akmn");
-
-        create_dir(test_dir.clone()).unwrap();
-
-        // Clone into our test directory
-        assert_eq!(
-            type_of!(git::Repository::clone(repo, test_dir.clone().join("clone_test")).unwrap()),
-            type_of!(git::Repository::init_bare(test_dir.clone().join("clone_test_init")).unwrap())
-        );
-
-        remove_dir_all(test_dir.clone()).unwrap();
-    }
 }

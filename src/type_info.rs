@@ -115,13 +115,36 @@ mod tests {
         assert_eq!(type_of!(vec![1]), type_of!(Vec::new() as Vec<i32>));
     }
 
-    //#[test]
-    //fn result_generic() {
-    //    assert_eq!(type_of!(), type_of!("1".parse::<Result<T,S>>().unwrap()));
-    //}
+    #[test]
+    fn result_generic() {
+        let r: Result<i32, i32> = Ok(1);
+        let e: Result<i32, i32> = Err(2);
+        assert_eq!(type_of!(r), type_of!(e));
+    }
 
-    //#[test]
-    //fn git_repo() {
-    //    assert_eq!(type_of!(1 as i32), type_of!("1".parse::<Repository>().unwrap()));
-    //}
+    #[test]
+    fn git_repository() {
+        use ::std::{env, fs, path};
+        let current_repo_path: path::PathBuf = match env::var("CARGO_MANIFEST_DIR") {
+            Ok(p) => path::PathBuf::from(p),
+            Err(e) => panic!("Could not access CARGO_MANIFEST_DIR environment variable, Err: {:?}", e),
+        };
+        let test_init_repo_path: path::PathBuf = current_repo_path
+            .clone()
+            .join("tests")
+            .join("akty");
+
+        let r1: Repository = match Repository::discover(current_repo_path) {
+            Ok(r) => r,
+            Err(e) => panic!("Error discovering current repository, Err: {:?}", e),
+        };
+        
+        let r2: Repository = match Repository::init(test_init_repo_path.clone()) {
+            Ok(r) => r,
+            Err(e) => panic!("Error initialize tests/ak_type-of repository, Err: {:?}", e),
+        };
+    
+        assert_eq!(type_of!(r1), type_of!(r2));
+        fs::remove_dir_all(test_init_repo_path).unwrap();
+    }
 }
