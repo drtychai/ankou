@@ -76,7 +76,7 @@ macro_rules! type_of {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::git::Repository;
+    use crate::git_log::Repository;
 
     impl_type_info!(i32, i64, f32, f64, str, String, Vec<T>, Result<T,S>, Repository);
 
